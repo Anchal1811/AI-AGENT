@@ -2,3 +2,7 @@ python-dotenv
 langchain
 langchain_community
 chromadb
+pymupdf
+flask
+requests
+gunicorn

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Accord.ai</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <!-- Markdown Renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .chat-box {
+      height: 60vh;
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-bubble {
+      padding: 10px 15px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      max-width: 75%;
+      word-wrap: break-word;
+    }
+    .user {
+      background-color: #007bff;
+      color: white;
+      align-self: flex-end;
+    }
+    .bot {
+      background-color: #f1f1f1;
+      color: #333;
+      align-self: flex-start;
+    }
+    .chat-form {
+      display: flex;
+      gap: 10px;
+    }
+    .upload-card {
+      border-radius: 15px;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    /* Markdown formatting inside bot messages */
+    .bot h1, .bot h2, .bot h3 { margin: 5px 0; }
+    .bot code { background: #eee; padding: 2px 5px; border-radius: 4px; }
+    .bot pre { background: #272822; color: #f8f8f2; padding: 10px; border-radius: 8px; overflow-x: auto; }
+    .bot ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <h1 class="text-center mb-4">📚 RAG Assistant</h1>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Upload Section -->
+    <div class="card upload-card mb-4 p-3">
+      <h5>Upload PDF</h5>
+      <form method="POST" enctype="multipart/form-data">
+        <div class="input-group">
+          <input type="file" class="form-control" name="file" accept=".pdf" required>
+          <button type="submit" class="btn btn-primary">Upload</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Chat Section -->
+    <div id="chat-box" class="chat-box mb-3">
+      {% for chat in chat_history %}
+        <div class="chat-bubble user"><strong>You:</strong> {{ chat.user }}</div>
+        <div class="chat-bubble bot"><strong>Assistant:</strong> {{ chat.bot|safe }}</div>
+      {% endfor %}
+    </div>
+    <form id="chat-form" class="chat-form">
+      <input type="text" id="query" class="form-control" placeholder="Type your question..." required>
+      <button type="submit" class="btn btn-success">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("query");
+    const chatBox = document.getElementById("chat-box");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const query = input.value.trim();
+      if (!query) return;
+
+      // Add user message instantly
+      const userMsg = document.createElement("div");
+      userMsg.className = "chat-bubble user";
+      userMsg.innerHTML = "<strong>You:</strong> " + query;
+      chatBox.appendChild(userMsg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      input.value = "";
+
+      // Send to backend
+      const response = await fetch("/ask", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({query})
+      });
+      const data = await response.json();
+
+      //  Render Markdown in bot reply
+      const botMsg = document.createElement("div");
+      botMsg.className = "chat-bubble bot";
+      botMsg.innerHTML = "<strong>Accord:</strong><br>" + marked.parse(data.bot);
+      chatBox.appendChild(botMsg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    //  Allow Enter to send
+    input.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        form.dispatchEvent(new Event("submit"));
+      }
+    });
+  </script>
+</body>
+</html>
