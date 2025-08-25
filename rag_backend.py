@@ -1,29 +1,3 @@
-#
-# This script is a complete RAG (Retrieval-Augmented Generation) backend
-# that can process PDF files, perform semantic search, and generate responses
-# using the Gemini API.
-#
-# It can be run as a standalone script or integrated into a web framework.
-# To run this, you will need to:
-# 1. pip install PyMuPDF langchain-community chromadb requests python-dotenv
-# 2. Create a 'docs' folder and place your PDF files inside.
-# 3. Create a .env file with your GEMINI_API_KEY.
-#
-# How it works:
-# 1. Load & Split: PyMuPDF reads the content of PDF files. The text is
-#    then split into smaller, manageable chunks using a text splitter.
-# 2. Indexing: Each text chunk is converted into a numerical vector (embedding)
-#    and stored in a local vector database (ChromaDB). This process is known as
-#    indexing.
-# 3. Retrieval: When a user asks a question, the question is also converted to
-#    an embedding. A similarity search is performed on the vector database
-#    to find the most relevant document chunks.
-# 4. Generation: The retrieved chunks are combined with the user's question
-#    to create a powerful prompt for the LLM.
-# 5. LLM Call: The prompt is sent to the Gemini API, which generates a final,
-#    context-aware response.
-#
-
 import json
 import requests
 import re
